@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise RAG Gateway | AI Knowledge Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+:root {
+    --void: #060911;
+    --surface: #0e1422;
+    --surface-raised: #151d30;
+    --line: #212d4a;
+    --text-hi: #F3F6FC;
+    --text-mid: #8B98B4;
+    --signal: #00F2FE;
+    --pulse-col: #4FACFE;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background-color: var(--void);
+    color: var(--text-hi);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    padding: 20px;
+}
+#field { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+#field svg { width: 100%; height: 100%; }
+.dot { fill: #1e294b; transition: fill .4s ease; }
+.dot.lit { fill: var(--signal); filter: drop-shadow(0 0 6px var(--signal)); }
+.link { stroke: var(--signal); stroke-width: 1.2; opacity: 0; }
+.link.show { opacity: .6; transition: opacity .5s ease; }
+
+@keyframes drift {
+    0%, 100% { transform: translate(0,0); }
+    50% { transform: translate(6px, -6px); }
+}
+.drift { animation: drift 10s ease-in-out infinite; }
+
+@keyframes pulseRing {
+    0% { transform: scale(0.1); opacity: 1; }
+    100% { transform: scale(18); opacity: 0; }
+}
+.ring {
+    position: absolute; left: 50%; top: 50%;
+    width: 12px; height: 12px; margin: -6px 0 0 -6px;
+    border-radius: 50%; border: 2px solid var(--signal);
+    box-shadow: 0 0 15px var(--signal);
+    animation: pulseRing 1.6s cubic-bezier(.1,.6,.3,1) forwards;
+    pointer-events: none;
+}
+
+.card {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 680px;
+    background: rgba(14, 20, 34, 0.9);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(16px);
+}
+
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.node-status { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.15em; }
+.status-dot { width: 8px; height: 8px; background: #34d399; border-radius: 50%; box-shadow: 0 0 8px #34d399; }
+.version-badge { background: var(--surface-raised); border: 1px solid var(--line); padding: 4px 10px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-mid); }
+
+h1 { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+p.desc { font-size: 14px; color: var(--text-mid); line-height: 1.5; margin-bottom: 24px; }
+
+.controls-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.controls-header { display: flex; justify-content: space-between; align-items: center; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { 
+    background: var(--surface-raised); border: 1px solid var(--line); color: var(--text-mid); 
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; 
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+}
+.chip:hover { border-color: var(--signal); color: var(--text-hi); background: rgba(0, 242, 254, 0.05); }
+
+.source-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.source-chip {
+    background: rgba(0, 242, 254, 0.1); border: 1px solid var(--signal); color: var(--signal);
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+}
+
+select {
+    background: var(--surface-raised); border: 1px solid var(--line); color: var(--text-mid);
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+    outline: none; cursor: pointer;
+}
+
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; align-items: flex-end; }
+textarea {
+    flex: 1; background: var(--void); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; color: var(--text-hi); font-size: 14px; font-family: 'JetBrains Mono', monospace;
+    outline: none; transition: all 0.2s; resize: none; overflow: hidden; min-height: 50px; max-height: 150px;
+    line-height: 1.4;
+}
+textarea:focus { border-color: var(--signal); box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15); }
+
+button.ask-btn {
+    background: linear-gradient(135deg, var(--signal), var(--pulse-col));
+    color: #060911; border: none; border-radius: 12px; padding: 0 24px; height: 50px;
+    font-weight: 700; font-size: 14px; cursor: pointer; transition: opacity 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2); white-space: nowrap;
+}
+button.ask-btn:hover { opacity: 0.9; }
+button.ask-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pipeline {
+    display: none; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;
+    background: rgba(6, 9, 17, 0.6); padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+}
+.pipeline.active-grid { display: grid; }
+.step { opacity: 0.3; display: flex; align-items: center; gap: 6px; color: var(--text-mid); }
+.step.active { opacity: 1; color: var(--signal); }
+.step.done { opacity: 1; color: var(--text-hi); }
+.step-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.step.active .step-dot { background: var(--signal); box-shadow: 0 0 8px var(--signal); }
+.step.done .step-dot { background: var(--text-mid); }
+
+.response-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.response-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-mid); }
+.copy-btn { background: none; border: none; color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; display: none; }
+.copy-btn:hover { color: var(--signal); }
+
+.response-box {
+    background: var(--void); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px; min-height: 120px; max-height: 350px; overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; color: var(--text-hi);
+    white-space: pre-wrap;
+}
+.blink { animation: blink 0.8s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div id="field" aria-hidden="true"><svg id="fieldSvg" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid slice"></svg></div>
+
+<div class="card">
+    <div class="header-top">
+        <div class="node-status"><span class="status-dot"></span> Secure Node Connected</div>
+        <div class="version-badge">v2.5-optimized</div>
+    </div>
+
+    <h1>Enterprise RAG Gateway</h1>
+    <p class="desc">Advanced vector-indexed semantic retrieval pipeline. Ask questions and inspect verified knowledge context instantly.</p>
+
+    <div class="controls-row">
+        <div class="controls-header">
+            <span class="response-title">Indexed Documents</span>
+            <select id="scopeFilter">
+                <option value="global">🌍 Global Search (All Docs)</option>
+                <option value="enterprise_rag_vector_index">🗂️ Enterprise Vector Index</option>
+            </select>
+        </div>
+        <!-- Dynamic Document Chips Container -->
+        <div class="chips" id="dynamicDocChips">
+            <div class="chip">📄 Loading Indexed PDFs...</div>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <textarea id="queryInput" rows="1" placeholder="Type your query here..."></textarea>
+        <button onclick="sendQuery()" id="sendBtn" class="ask-btn">Ask AI</button>
+    </div>
+
+    <div id="pipeline" class="pipeline">
+        <div class="step" data-step="0"><span class="step-dot"></span>Embed</div>
+        <div class="step" data-step="1"><span class="step-dot"></span>Search</div>
+        <div class="step" data-step="2"><span class="step-dot"></span>Rerank</div>
+        <div class="step" data-step="3"><span class="step-dot"></span>Generate</div>
+    </div>
+
+    <!-- Container for displaying source PDFs involved in the result -->
+    <div id="sourceContainer" style="display: none; margin-bottom: 12px;">
+        <div class="response-title" style="margin-bottom: 6px;">Relevant Document Sources:</div>
+        <div class="source-badges" id="sourceBadges"></div>
+    </div>
+
+    <div>
+        <div class="response-header">
+            <span class="response-title">Response Synthesis</span>
+            <button onclick="copyResponse()" id="copyBtn" class="copy-btn">📋 Copy</button>
+        </div>
+        <div id="responseBox" class="response-box">Ask a question to initialize semantic vector search.</div>
+    </div>
+</div>
+
+<script>
+const backendURL = ""; 
+
+const svg = document.getElementById('fieldSvg');
+const N = 80;
+const dots = [];
+for(let i=0; i<N; i++){
+    const x = Math.random()*900, y = Math.random()*900;
+    const el = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    el.setAttribute('cx', x); el.setAttribute('cy', y); el.setAttribute('r', 1.5 + Math.random()*1.5);
+    el.classList.add('dot', 'drift');
+    svg.appendChild(el);
+    dots.push({el, x, y});
+}
+
+function retrievalPulse(){
+    const ring = document.createElement('div');
+    ring.className = 'ring';
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 1600);
+
+    const cx = 450, cy = 450;
+    const sorted = dots.map(d => ({...d, dist: Math.hypot(d.x-cx, d.y-cy)})).sort((a,b) => a.dist-b.dist);
+    sorted.slice(2, 8).forEach((d, i) => {
+        setTimeout(() => {
+            d.el.classList.add('lit');
+            const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+            line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+            line.setAttribute('x2', d.x); line.setAttribute('y2', d.y);
+            line.classList.add('link');
+            svg.insertBefore(line, svg.firstChild);
+            requestAnimationFrame(() => line.classList.add('show'));
+            setTimeout(() => { d.el.classList.remove('lit'); line.remove(); }, 3000);
+        }, i * 80);
+    });
+}
+
+// Fetch available PDF documents dynamically from backend on startup
+async function fetchIndexedFiles() {
+    const chipsContainer = document.getElementById('dynamicDocChips');
+    try {
+        const url = backendURL ? `${backendURL}/api/v1/rag/documents` : `/api/v1/rag/documents`;
+        const res = await axios.get(url);
+        const files = res.data.documents || [];
+        
+        chipsContainer.innerHTML = '';
+        if (files.length === 0) {
+            chipsContainer.innerHTML = '<div class="chip">📁 No PDF files indexed</div>';
+            return;
+        }
+
+        files.forEach(file => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.innerHTML = `📄 ${file}`;
+            chip.onclick = () => appendQuery(file);
+            chipsContainer.appendChild(chip);
+        });
+    } catch (e) {
+        chipsContainer.innerHTML = '<div class="chip">📄 Multi-Document Index</div>';
+    }
+}
+
+// Trigger initial load
+fetchIndexedFiles();
+
+const queryInput = document.getElementById('queryInput');
+queryInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
+
+function appendQuery(text){
+    queryInput.value = queryInput.value ? queryInput.value + ' ' + text : text;
+    queryInput.focus();
+    queryInput.style.height = 'auto';
+    queryInput.style.height = (queryInput.scrollHeight) + 'px';
+}
+
+const stepEls = [...document.querySelectorAll('.step')];
+let stepTimer = null;
+function setStep(idx, done=false){
+    stepEls.forEach((el, i)=>{
+        el.classList.remove('active','done');
+        if(done && i <= idx) el.classList.add('done');
+        else if(i === idx) el.classList.add('active');
+        else if(i < idx) el.classList.add('done');
+    });
+}
+function startPipeline(){
+    document.getElementById('pipeline').classList.add('active-grid');
+    document.getElementById('copyBtn').style.display = 'none';
+    document.getElementById('sourceContainer').style.display = 'none';
+    let i = 0; setStep(0);
+    stepTimer = setInterval(()=>{
+        i = Math.min(i+1, stepEls.length-1);
+        setStep(i);
+    }, 700);
+}
+function finishPipeline(){
+    clearInterval(stepTimer);
+    setStep(stepEls.length-1, true);
+    document.getElementById('copyBtn').style.display = 'inline-block';
+}
+
+function typeReveal(el, text){
+    el.innerHTML = '';
+    const cursor = document.createElement('span');
+    cursor.className = 'blink'; cursor.textContent = '▍';
+    let i = 0;
+    const speed = Math.max(3, Math.min(15, 1000/Math.max(text.length, 1)));
+    function step(){
+        el.textContent = text.slice(0, i);
+        el.appendChild(cursor);
+        i++;
+        if(i <= text.length) setTimeout(step, speed);
+        else cursor.remove();
+    }
+    step();
+}
+
+async function sendQuery(){
+    const query = queryInput.value.trim();
+    const responseBox = document.getElementById('responseBox');
+    const sendBtn = document.getElementById('sendBtn');
+    const scope = document.getElementById('scopeFilter').value;
+    
+    if(!query) return;
+
+    sendBtn.disabled = true;
+    queryInput.disabled = true;
+    responseBox.textContent = '';
+    retrievalPulse();
+    startPipeline();
+
+    const targetCollection = scope === "global" ? "enterprise_rag_vector_index" : scope;
+    
+    try{
+        const url = backendURL ? `${backendURL}/api/v1/rag/chat` : `/api/v1/rag/chat`;
+        
+        const payload = { 
+            query: query, 
+            collection_name: targetCollection, 
+            use_reranker: true 
+        };
+        
+        const res = await axios.post(url, payload);
+        
+        finishPipeline();
+        
+        // Extract output text and dynamically render only the source documents that yielded results
+        const answer = res.data.answer || JSON.stringify(res.data, null, 2);
+        const sourceDocs = res.data.source_documents || res.data.sources || [];
+        
+        if (sourceDocs.length > 0) {
+            const sourceContainer = document.getElementById('sourceContainer');
+            const sourceBadges = document.getElementById('sourceBadges');
+            sourceBadges.innerHTML = '';
+            
+            sourceDocs.forEach(docName => {
+                const badge = document.createElement('span');
+                badge.className = 'source-chip';
+                badge.textContent = `📌 ${docName}`;
+                sourceBadges.appendChild(badge);
+            });
+            sourceContainer.style.display = 'block';
+        }
+
+        setTimeout(() => typeReveal(responseBox, answer), 150);
+    }catch(error){
+        clearInterval(stepTimer);
+        document.getElementById('pipeline').classList.remove('active-grid');
+        
+        let errorDetails = error.message;
+        if(error.response) {
+            errorDetails = error.response.data?.detail || JSON.stringify(error.response.data) || "Server returned an error.";
+        } else if (error.request) {
+            errorDetails = "No response from backend. Check if backend URL is correct and server is running.";
+        }
+        
+        const msg = `⚠️ Gateway Connection Error:\n${errorDetails}`;
+        setTimeout(() => typeReveal(responseBox, msg), 100);
+    }finally{
+        sendBtn.disabled = false;
+        queryInput.disabled = false;
+        queryInput.focus();
+    }
+}
+
+function copyResponse(){
+    const text = document.getElementById('responseBox').innerText;
+    navigator.clipboard.writeText(text);
+    const copyBtn = document.getElementById('copyBtn');
+    copyBtn.textContent = '✅ Copied!';
+    setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
+}
+
+queryInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && (e.ctrlKey || e.shiftKey)) {
+        e.preventDefault();
+        sendQuery();
+    }
+});
+</script>
+</body>
+</html>

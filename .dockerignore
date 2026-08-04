@@ -1,0 +1,71 @@
+# --- Version control ---
+.git
+.gitignore
+.gitattributes
+
+# --- Python cache/build artifacts ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Docker ---
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# --- IDE / editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Env / secrets (never bake these into an image) ---
+.env
+.env.*
+*.pem
+*.key
+
+# --- Tests, docs, CI ---
+tests/
+test/
+*.md
+docs/
+.github/
+
+# --- Logs, tmp, caches ---
+*.log
+logs/
+tmp/
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Data / model artifacts (usually large, shouldn't be in image) ---
+data/
+*.csv
+*.parquet
+models/
+*.pkl
+*.bin
+*.gguf
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
