@@ -1,3 +1,16 @@
+---
+title: Enterprise RAG Gateway
+emoji: 🚀
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: 5.16.0
+app_file: app.py
+pinned: false
+---
+
+
+
 # 🚀 Enterprise RAG Gateway & Knowledge Pipeline
 
 An enterprise-grade, multi-provider Retrieval-Augmented Generation (RAG) architecture and semantic search gateway built with **FastAPI**, **Qdrant**, **Groq (Llama-3.3)**, **OpenAI**, and **Neural Cross-Encoders**. Designed for high-density document parsing, low-latency hybrid retrieval, strict guardrailed LLM synthesis, and automatic model resilience.
