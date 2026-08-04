@@ -1,16 +1,13 @@
 import os
 import sys
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
+import spaces  # Import spaces
 import uvicorn
 import gradio as gr
 from fastapi.responses import FileResponse
 
-# Import main FastAPI instance
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from main import app as fastapi_app
 
-# HTML UI route serve karein
 @fastapi_app.get("/", include_in_schema=False)
 async def serve_index():
     index_path = os.path.join(os.path.dirname(__file__), "index.html")
@@ -18,13 +15,19 @@ async def serve_index():
         return FileResponse(index_path)
     return {"message": "Enterprise RAG Gateway Backend API Active"}
 
-# Lightweight Gradio Blocks wrapper
-with gr.Blocks(title="Enterprise RAG Gateway") as demo:
-    gr.Markdown("# 🚀 Enterprise RAG Gateway Active")
-    gr.Markdown("FastAPI backend & Cyberpunk Web UI running successfully.")
+# ZeroGPU required decorator for HF Space when ZeroGPU is active
+@spaces.GPU
+def dummy_func():
+    return "Enterprise RAG Gateway active on GPU"
 
-# Mount Gradio onto FastAPI root runner
-app = gr.mount_gradio_app(fastapi_app, demo, path="/ui")
+demo = gr.Interface(
+    fn=dummy_func,
+    inputs=[],
+    outputs="text",
+    title="Enterprise RAG Gateway"
+)
+
+app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=7860, reload=False)
