@@ -3,10 +3,11 @@ title: Enterprise RAG Gateway
 emoji: 🚀
 colorFrom: blue
 colorTo: indigo
-sdk: docker
+sdk: gradio
+sdk_version: 5.16.0
+app_file: app.py
 pinned: false
 ---
-
 
 # 🚀 Enterprise RAG Gateway & Knowledge Pipeline
 
