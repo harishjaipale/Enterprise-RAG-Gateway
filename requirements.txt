@@ -1,56 +1,56 @@
 # ======================================================================
 # CORE ENVIRONMENT, ASYNCHRONOUS LIFECYCLE & RESILIENCE
 # ======================================================================
-nest-asyncio==1.6.0
-pydantic-settings==2.7.1
-tenacity==9.0.0
+nest-asyncio>=1.6.0
+pydantic-settings>=2.7.0
+tenacity>=9.0.0
 python-dotenv>=1.0.1
-httpx>=0.27.0
+httpx>=0.28.0
 
 # ======================================================================
 # DATA INGESTION & ADVANCED DOCUMENT PARSING (LLAMACLOUD TIER)
 # ======================================================================
-llama-cloud==0.1.5
-llama-parse>=0.4.0
-llama-index-readers-llama-parse>=0.1.0,<0.5.0
-llama-index-core==0.12.14
-pypdf>=4.0.0
+llama-cloud>=0.1.5
+llama-parse>=0.5.0
+llama-index-readers-llama-parse>=0.1.0
+llama-index-core>=0.12.0
+pypdf>=5.0.0
 
 # ======================================================================
 # VECTOR DATABASE CLIENTS & BINARY STREAM STREAMING
 # ======================================================================
-qdrant-client==1.13.2
-pinecone[asyncio]>=6.0.0,<10.0.0
+qdrant-client>=1.13.0
+pinecone[asyncio]>=6.0.0
 
 # ======================================================================
 # NEURAL SEARCH, EMBEDDINGS ENCODERS & CROSS-ATTENTION RERANKING
 # ======================================================================
-huggingface-hub>=0.20.0,<1.0.0
-transformers>=4.40.0,<4.50.0
-sentence-transformers==3.4.1
+huggingface-hub>=0.28.0,<1.0.0
+transformers>=4.48.0
+sentence-transformers>=3.4.0
 torch>=2.2.0
-cohere==5.13.1
+cohere>=5.13.0
 numpy>=1.26.0
 
 # ======================================================================
 # LLM GENERATIVE PROVIDERS (GROQ & OPENAI FALLBACK)
 # ======================================================================
-groq>=0.9.0
-openai==1.59.7
+groq>=0.15.0
+openai>=1.60.0
 
 # ======================================================================
 # CORE API GATEWAY, GRADIO & MCP SERVER
 # ======================================================================
-fastapi>=0.110.0,<0.116.0
-uvicorn[standard]==0.34.0
-pydantic==2.10.6
-python-multipart>=0.0.9
-gradio
-mcp>=1.0.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.10.0
+python-multipart>=0.0.12
+gradio>=5.0.0
+mcp>=1.2.0
 
 # ======================================================================
 # OBSERVABILITY, REAL-TIME TRACING, DATABASE & AUDITING
 # ======================================================================
-langfuse==2.59.2
-tiktoken==0.8.0
-psycopg[binary]>=3.1.0
+langfuse>=2.59.0
+tiktoken>=0.8.0
+psycopg[binary]>=3.2.0
