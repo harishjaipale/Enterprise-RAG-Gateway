@@ -100,7 +100,7 @@ PRODUCTION_RAG2/
 git clone https://github.com/harishjaipale/Enterprise-RAG-Gateway
 cd Enterprise-RAG-Gateway
 
-# Create Virtual Environment (Python 3.11 recommended)
+### 2. Create Virtual Environment (Python 3.11 recommended)
 python -m venv venv
 
 # Activate Environment
@@ -143,18 +143,7 @@ uvicorn main:app --reload --port 8000
 
 Open your browser and navigate to: `http://localhost:8000`
 
----
 
-## 📦 Project Structure
-
-```text
-├── main.py             # FastAPI entry point, routes & middleware
-├── index.html           # Interactive Cyberpunk Frontend Web UI
-├── requirements.txt    # Project dependencies
-└── README.md            # Documentation
-```
-
----
 
 ## 🛡️ License
 
